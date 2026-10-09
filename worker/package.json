@@ -1,0 +1,15 @@
+{
+  "name": "whatsapp-inteligencia",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Worker local (Mac) de ingestao e inteligencia de WhatsApp. Somente leitura do ChatStorage.sqlite.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node test/run.mjs",
+    "status": "node src/cli.mjs status",
+    "dry-run": "node src/cli.mjs dry-run"
+  }
+}

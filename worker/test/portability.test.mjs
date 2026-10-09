@@ -1,0 +1,66 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { EventEmitter } from 'node:events';
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'wai-portability-'));
+process.env.WAI_CONFIG_DIR = dir;
+process.env.WAI_TIMEZONE = 'Pacific/Auckland';
+for (const key of Object.keys(process.env)) if (key.startsWith('WA_DB_')) delete process.env[key];
+const { criarDb, localizarSenha } = await import('../src/db.mjs');
+const { carregarConfig } = await import('../src/config.mjs');
+const { diaBrt } = await import('../src/inteligencia.mjs');
+const { gerarPlistRespostas } = await import('../src/launchagent.mjs');
+test.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+test('connection supports standalone PostgreSQL without project ref and keeps password off argv', async () => {
+  const file = path.join(dir, 'whatsapp-db.env');
+  fs.writeFileSync(file, 'WA_DB_HOST=localhost\nWA_DB_USER=standalone\nWA_DB_NAME=wai\nWA_DB_PORT=5439\nWA_DB_SSLMODE=disable\nWA_DB_PASSWORD=fake-password\n', { mode: 0o600 });
+  let captured;
+  const spawn = (bin, args, options) => {
+    captured = {args, options};
+    const p = new EventEmitter(); p.stdout = new EventEmitter(); p.stderr = new EventEmitter();
+    p.stdin = { end() { queueMicrotask(() => p.emit('close', 0)); } };
+    return p;
+  };
+  await criarDb({}, { spawn, bin: '/fixture/psql' }).exec('select 1');
+  assert.equal(captured.options.env.PGUSER, 'standalone');
+  assert.equal(captured.options.env.PGPORT, '5439');
+  assert.equal(captured.options.env.PGDATABASE, 'wai');
+  assert.equal(captured.options.env.PGSSLMODE, 'disable');
+  assert.ok(!captured.args.join(' ').includes('fake-password'));
+  fs.chmodSync(file, 0o644);
+  assert.throws(() => localizarSenha(), /Permissao insegura/);
+  fs.unlinkSync(file);
+  assert.throws(() => criarDb({}, { senha: 'fake' }), /Configure WA_DB_HOST/);
+});
+test('config rejects insecure files and truthy strings for DM activation', () => {
+  const file = path.join(dir, 'config.json');
+  fs.writeFileSync(file, '{"dm":{"ativo":"false"}}', {mode:0o600});
+  assert.throws(() => carregarConfig(file), /booleano/);
+  fs.chmodSync(file, 0o644);
+  assert.throws(() => carregarConfig(file), /Permissao insegura/);
+  assert.equal(carregarConfig(path.join(dir, 'absent')).dm.ativo, false);
+});
+test('timezone rolls date and plist retains isolated config without credentials', () => {
+  assert.equal(diaBrt(Date.parse('2026-10-09T12:00:00Z')), '2026-10-10');
+  const xml = gerarPlistRespostas({appDir:'/fixture/app & worker'});
+  assert.match(xml, /src\/respostas-cli.mjs/);
+  assert.match(xml, /--dry-run/);
+  assert.match(xml, /Pacific\/Auckland/);
+  assert.ok(xml.includes(dir));
+  assert.match(xml, /app &amp; worker/);
+  assert.doesNotMatch(xml, /PASSWORD|--real/);
+  assert.match(gerarPlistRespostas({appDir:'/fixture', real:true}), /--real/);
+});
+test('bundled gateway executes with Node and preserves CLI argument boundaries', async () => {
+  const { enviarTexto } = await import('../src/sender.mjs');
+  const calls = [];
+  const exec = async (bin, args) => { calls.push({bin,args}); return {stdout: args.includes('status') ? '{"whatsapp":"connected"}' : '{"sent":true}'}; };
+  const result = await enviarTexto({texto:'Teste', chave:'fixture', grupo:'Grupo Ficticio', dryRun:false, config:{ENVIO_ATIVO:true, notificacao:{gateway_entry:'/fixture with spaces/cli.mjs'}}, exec});
+  assert.equal(result.enviado, true);
+  assert.equal(calls[0].bin, process.execPath);
+  assert.deepEqual(calls[0].args, ['/fixture with spaces/cli.mjs','channel','status']);
+  assert.equal(calls[1].args[0], '/fixture with spaces/cli.mjs');
+  assert.ok(calls[1].args.includes('Grupo Ficticio'));
+});

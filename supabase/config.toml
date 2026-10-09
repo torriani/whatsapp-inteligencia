@@ -1,0 +1,10 @@
+project_id = "whatsapp-inteligencia"
+[api]
+enabled = true
+schemas = ["public", "wa"]
+extra_search_path = ["public", "extensions"]
+[db]
+major_version = 16
+[auth]
+site_url = "http://localhost:3040"
+additional_redirect_urls = ["http://localhost:3040/**"]

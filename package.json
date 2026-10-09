@@ -1,0 +1,26 @@
+{
+  "name": "whatsapp-inteligencia",
+  "version": "0.1.0",
+  "private": true,
+  "author": "Juliano Torriani",
+  "description": "Base de implementação de inteligência pessoal de WhatsApp para macOS",
+  "scripts": {
+    "setup": "npm ci --prefix portal && npm ci --prefix gateway",
+    "dev": "npm run dev --prefix portal",
+    "build": "npm run build --prefix portal",
+    "start": "npm run start --prefix portal",
+    "typecheck": "npm run typecheck --prefix portal",
+    "lint": "node scripts/check-syntax.mjs",
+    "test": "npm test --prefix worker && npm test --prefix gateway && npm test --prefix portal",
+    "verify": "npm run lint && npm run typecheck && npm test && npm run build",
+    "doctor": "node scripts/doctor.mjs",
+    "worker": "node worker/src/cli.mjs",
+    "gateway": "node gateway/dist/cli.js",
+    "db:apply": "psql -X -v ON_ERROR_STOP=1 -f supabase/migrations/20261009000000_wa_standalone.sql",
+    "db:test": "psql -X -v ON_ERROR_STOP=1 -f supabase/tests/security.sql"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.16.0"
+  }
+}

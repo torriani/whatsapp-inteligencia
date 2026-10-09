@@ -1,0 +1,32 @@
+{
+  "name": "whatsapp-inteligencia-portal",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -H 127.0.0.1 -p 3040",
+    "build": "next build",
+    "start": "next start -H 127.0.0.1 -p 3040",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test lib/whatsapp/*.test.ts"
+  },
+  "dependencies": {
+    "next": "16.2.6",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "@supabase/ssr": "^0.10.3",
+    "@supabase/supabase-js": "^2.106.0",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^3.6.0",
+    "@fontsource/inter": "^5.2.8",
+    "@fontsource/ibm-plex-mono": "^5.2.7"
+  },
+  "devDependencies": {
+    "typescript": "^5",
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "tailwindcss": "^4",
+    "@tailwindcss/postcss": "^4",
+    "tsx": "^4.22.3"
+  }
+}

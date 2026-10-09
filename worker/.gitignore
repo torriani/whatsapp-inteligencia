@@ -1,0 +1,9 @@
+*.sqlite
+*.sqlite-*
+*allowlist*.json
+*deny-terms*.txt
+/state.json
+*.log
+*.err
+node_modules/
+.claude/
