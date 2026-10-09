@@ -19973,4 +19973,3 @@ SHA256: 879741880b6ab48da99dcc06dcc674d381c9826137b0496bf7bb368f302de9fc
 /// <reference types="next" />
 /// <reference types="next/image-types/global" />
 ````
-
